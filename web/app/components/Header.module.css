@@ -1,0 +1,159 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 0 2.5rem;
+  height: 72px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(147, 51, 234, 0.15);
+}
+
+.inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+/* LOGO */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo img{
+  width: 120px;
+  height: auto;
+}
+
+.logoText {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: #fff;
+  background: linear-gradient(135deg, #fff 30%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* NAV */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.navLink {
+  font-family: 'Raleway', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  transition: color 0.25s, background 0.25s;
+  position: relative;
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: var(--purple-glow, #a855f7);
+  transition: width 0.3s ease;
+}
+
+.navLink:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.navLink:hover::after {
+  width: calc(100% - 1.8rem);
+}
+
+/* AUTH */
+.authButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.loginBtn {
+  font-family: 'Raleway', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s;
+}
+
+.loginBtn:hover {
+  color: #fff;
+  border-color: rgba(147, 51, 234, 0.5);
+  background: rgba(147, 51, 234, 0.1);
+}
+
+.registerBtn {
+  text-decoration: none;
+  display: block;
+  padding: 1px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #9333ea, #6b21a8, #a855f7);
+  transition: opacity 0.25s, box-shadow 0.25s;
+}
+
+.registerBtn:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+}
+
+.registerBtnInner {
+  display: block;
+  font-family: 'Raleway', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  background: #0a0a0a;
+  border-radius: 8px;
+  transition: background 0.25s;
+}
+
+.registerBtn:hover .registerBtnInner {
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .nav {
+    display: none;
+  }
+  .header {
+    padding: 0 1.25rem;
+  }
+}

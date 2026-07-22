@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UniverseStatus {
+  ACTIVE
+  DORMANT
+  COLLAPSED
+  CORRUPTED
+  LOST
+}
+
+enum SenderRole {
+  USER
+  AI
+  SYSTEM
+}
+
+enum ObjectiveStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  DISMISSED
+}
+
+enum CharacterStatus {
+  ALIVE
+  DEAD
+  LOST
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+
+  universes   Universe[]
+  memorySlots MemorySlot[]
+  signals     Signal[]
+  objectives  Objective[]
+  characters  Character[]
+}
+
+model Universe {
+  id           String         @id @default(uuid())
+  userId       String
+  universeCode String         @unique
+  description  String
+  status       UniverseStatus @default(ACTIVE)
+  created_at   DateTime       @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  characters  Character[]
+  signals     Signal[]
+  memorySlots MemorySlot[]
+  objectives  Objective[]
+  messages    Message[]
+}
+
+model Message {
+  id         String     @id @default(uuid())
+  universeId String
+  content    String
+  senderRole SenderRole
+  created_at DateTime   @default(now())
+
+  universe Universe @relation(fields: [universeId], references: [id])
+}
+
+model MemorySlot {
+  id         String                @id @default(uuid())
+  userId     String
+  universeId String
+  content    String
+  embedding  Unsupported("vector")
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id])
+
+  @@index([userId, universeId])
+}
+
+model Signal {
+  id         String   @id @default(uuid())
+  title      String
+  universeId String
+  userId     String
+  created_at DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id])
+}
+
+model Objective {
+  id         String          @id @default(uuid())
+  title      String
+  status     ObjectiveStatus
+  universeId String
+  userId     String
+  created_at DateTime        @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id])
+}
+
+model Character {
+  id                   String                @id @default(uuid())
+  name                 String
+  description          String
+  descriptionEmbedding Unsupported("vector")
+  status               CharacterStatus
+  universeId           String
+  userId               String
+  created_at           DateTime              @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id])
+}

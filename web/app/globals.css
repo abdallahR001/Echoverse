@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Sans:wght@400;600;700;900&family=Raleway:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --black: #000000;
+  --deep: #050508;
+  --purple-dark: #1a0a2e;
+  --purple-mid: #6b21a8;
+  --purple-main: #9333ea;
+  --purple-light: #c084fc;
+  --purple-glow: #a855f7;
+  --white: #ffffff;
+  --white-dim: rgba(255, 255, 255, 0.75);
+  --white-subtle: rgba(255, 255, 255, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--black);
+  color: var(--white);
+  font-family: 'Raleway', sans-serif;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: 'Cinzel', serif;
+}
+
+::selection {
+  background: var(--purple-main);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple-mid);
+  border-radius: 2px;
+}

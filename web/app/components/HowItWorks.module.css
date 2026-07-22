@@ -1,0 +1,118 @@
+.section {
+  background: #000;
+  padding: 120px 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(147, 51, 234, 0.4), transparent);
+}
+
+.inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(147, 51, 234, 0.7);
+}
+
+.title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  color: white;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-style: italic;
+  max-width: 500px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  border: 1px solid rgba(147, 51, 234, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.step {
+  display: flex;
+  gap: 1.5rem;
+  padding: 2.5rem;
+  background: rgba(5, 5, 8, 0.8);
+  border: 1px solid rgba(147, 51, 234, 0.08);
+  transition: background 0.3s;
+  position: relative;
+}
+
+.step:hover {
+  background: rgba(88, 28, 135, 0.12);
+}
+
+.stepNum {
+  font-family: 'Cinzel', serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: rgba(147, 51, 234, 0.2);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.3s;
+}
+
+.step:hover .stepNum {
+  color: rgba(147, 51, 234, 0.5);
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stepTitle {
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: white;
+}
+
+.stepBody {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 700px) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 80px 1.5rem;
+  }
+}
