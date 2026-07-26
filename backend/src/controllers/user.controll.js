@@ -30,7 +30,7 @@ export const signUp = async (req,res,next) =>
 
         const accessToken = generateAccessToken(user);
 
-        res.cookie("accessToken", accessToken, {
+        res.cookie("token", accessToken, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
@@ -80,7 +80,7 @@ export const signIn = async (req, res, next) => {
 
         const accessToken = generateAccessToken(user);
 
-        res.cookie("accessToken", accessToken, {
+        res.cookie("token", accessToken, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
