@@ -9,3 +9,12 @@ export const createUniverse = async ({universeCode,description,userId}) =>
         }
     })
 }
+
+export const getUniverseById = async (universeId) =>
+{
+    return await prisma.universe.findUnique({
+        where:{
+            id:universeId
+        }
+    })
+}

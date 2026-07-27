@@ -1,6 +1,7 @@
 import express from "express";
 import userRouter from "./routes/user.route.js";
 import universeRouter from "./routes/universe.route.js"
+import messageRouter from "./routes/message.route.js"
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import cors from "cors";
@@ -19,7 +20,7 @@ app.use(cors({
 // Routes
 app.use("/api/users", userRouter);
 app.use("/api/universes", universeRouter)
-
+app.use("/api/messages",messageRouter)
 
 
 // Error handler middleware
