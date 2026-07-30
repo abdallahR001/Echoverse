@@ -47,87 +47,132 @@ model User {
   password   String
   created_at DateTime @default(now())
 
-  universes   Universe[]
+  userUniverses UserUniverse[]
+
   memorySlots MemorySlot[]
-  signals     Signal[]
-  objectives  Objective[]
-  characters  Character[]
+
+  signals Signal[]
+
+  objectives Objective[]
+
+  characters Character[]
 }
 
 model Universe {
-  id           String         @id @default(uuid())
-  userId       String
-  universeCode String         @unique
+  id           String   @id @default(uuid())
+  universeCode String   @unique
   description  String
-  status       UniverseStatus @default(ACTIVE)
-  created_at   DateTime       @default(now())
+  lore String
+  created_at   DateTime @default(now())
 
-  user        User         @relation(fields: [userId], references: [id])
-  characters  Character[]
-  signals     Signal[]
+  userUniverses UserUniverse[]
+  infos UniverseInfo[]
+}
+
+model UserUniverse {
+  id         String         @id @default(uuid())
+  userId     String
+  universeId String
+  status     UniverseStatus @default(ACTIVE)
+  created_at DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  universe Universe @relation(fields: [universeId], references: [id])
+
+  messages Message[]
+
   memorySlots MemorySlot[]
-  objectives  Objective[]
-  messages    Message[]
+
+  objectives Objective[]
+
+  signals Signal[]
+
+  characters Character[]
+
+  @@unique([userId, universeId])
+}
+
+model UniverseInfo {
+  id          String                @id @default(uuid())
+  universeId  String
+  content     String
+  embedding   Unsupported("vector")
+  created_at  DateTime              @default(now())
+
+  universe Universe @relation(fields: [universeId], references: [id])
+
+  @@index([universeId])
 }
 
 model Message {
-  id         String     @id @default(uuid())
-  universeId String
-  content    String
-  senderRole SenderRole
-  created_at DateTime   @default(now())
+  id             String     @id @default(uuid())
+  userUniverseId String
+  content        String
+  senderRole     SenderRole
+  created_at     DateTime   @default(now())
 
-  universe Universe @relation(fields: [universeId], references: [id])
+  userUniverse UserUniverse @relation(fields: [userUniverseId], references: [id])
 }
 
 model MemorySlot {
-  id         String                @id @default(uuid())
-  userId     String
-  universeId String
-  content    String
-  embedding  Unsupported("vector")
-  created_at DateTime              @default(now())
-  updated_at DateTime              @updatedAt
+  id             String                @id @default(uuid())
+  userId         String
+  userUniverseId String
+  content        String
+  embedding      Unsupported("vector")
+  created_at     DateTime              @default(now())
+  updated_at     DateTime              @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id])
-  universe Universe @relation(fields: [universeId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  userUniverse  UserUniverse @relation(fields: [userUniverseId], references: [id])
 
-  @@index([userId, universeId])
+  @@index([userId])
+  @@index([userUniverseId])
 }
 
 model Signal {
-  id         String   @id @default(uuid())
-  title      String
-  universeId String
-  userId     String
-  created_at DateTime @default(now())
+  id             String   @id @default(uuid())
+  userId         String
+  userUniverseId String
+  title          String
+  created_at     DateTime @default(now())
 
-  user     User     @relation(fields: [userId], references: [id])
-  universe Universe @relation(fields: [universeId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  userUniverse  UserUniverse @relation(fields: [userUniverseId], references: [id])
+
+  @@index([userId])
+  @@index([userUniverseId])
 }
 
 model Objective {
-  id         String          @id @default(uuid())
-  title      String
-  status     ObjectiveStatus
-  universeId String
-  userId     String
-  created_at DateTime        @default(now())
+  id             String          @id @default(uuid())
+  userId         String
+  userUniverseId String
+  title          String
+  status         ObjectiveStatus
+  created_at     DateTime        @default(now())
 
-  user     User     @relation(fields: [userId], references: [id])
-  universe Universe @relation(fields: [universeId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  userUniverse  UserUniverse @relation(fields: [userUniverseId], references: [id])
+
+  @@index([userId])
+  @@index([userUniverseId])
 }
 
 model Character {
   id                   String                @id @default(uuid())
+  userId               String
+  userUniverseId       String
   name                 String
   description          String
   descriptionEmbedding Unsupported("vector")
   status               CharacterStatus
-  universeId           String
-  userId               String
   created_at           DateTime              @default(now())
 
-  user     User     @relation(fields: [userId], references: [id])
-  universe Universe @relation(fields: [universeId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  userUniverse  UserUniverse @relation(fields: [userUniverseId], references: [id])
+
+  @@index([userId])
+  @@index([userUniverseId])
 }

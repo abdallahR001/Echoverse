@@ -27,6 +27,20 @@ export const getPreviousMessages = async (universeId) => {
         orderBy: {
             created_at: "desc",
         },
-        take: 5,
+        take: 3,
+    });
+};
+
+export const createStartingMessage = async ({
+    userUniverseId,
+    content,
+    senderRole
+}) => {
+    return prisma.message.create({
+        data: {
+            userUniverseId,
+            content,
+            senderRole
+        }
     });
 };

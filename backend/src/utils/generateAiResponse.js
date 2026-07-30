@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { buildPrompt } from "./messagePromptBuilder.js";
 
 const openai = new OpenAI({
     apiKey: process.env.AI_API_KEY,
@@ -11,14 +10,10 @@ export const generateAIResponse = async ({
     previousMessages,
     userMessage,
     event,
+    prompt
 }) => {
 
-    const prompt = buildPrompt({
-        universe,
-        previousMessages,
-        userMessage,
-        event,
-    });
+    
 
     const response = await openai.chat.completions.create({
         model: "llama-3.3-70b-versatile",

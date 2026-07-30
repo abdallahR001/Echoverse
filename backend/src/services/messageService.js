@@ -2,6 +2,7 @@ import { createMessages, getPreviousMessages } from "../repositories/message.rep
 import { getUniverseById } from "../repositories/universe.repository.js";
 import { generateEvent } from "../utils/eventsEngine.js";
 import { generateAIResponse } from "../utils/generateAiResponse.js";
+import { buildPrompt } from "../utils/messagePromptBuilder.js";
 
 export const sendMessage = async ({ universeId, userMessage }) => {
 
@@ -29,6 +30,15 @@ export const sendMessage = async ({ universeId, userMessage }) => {
 
     const event = generateEvent();
 
+    //generate prompt
+
+    const prompt = buildPrompt({
+        universe,
+        previousMessages,
+        userMessage,
+        event,
+    });
+
     // 4. Generate AI response
 
     const aiResponse = await generateAIResponse({
@@ -36,6 +46,7 @@ export const sendMessage = async ({ universeId, userMessage }) => {
         previousMessages,
         userMessage,
         event,
+        prompt
     });
 
     // 5. Save messages
