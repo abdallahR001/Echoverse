@@ -57,11 +57,26 @@ const pastUniverses = [
   },
 ];
 
-const signals = [
-  { world: 'Echo Station 7', message: 'An anomaly has been detected near sector 4.', time: '2h ago', urgent: true },
-  { world: 'The Hollow Crown', message: 'Someone opened the sealed gate.', time: '5h ago', urgent: false },
-  { world: 'Kepler Café', message: 'The stranger returned. He\'s asking about you.', time: '1d ago', urgent: true },
-  { world: 'Echo Station 7', message: 'A distress signal was intercepted. Origin unknown.', time: '2d ago', urgent: false },
+// الأهداف الرئيسية داخل الكون الحالي (بديل الـ Signals)
+const objectives = [
+  {
+    title: 'Locate the Meridian Core',
+    world: 'The Shattered Meridian',
+    progress: '2 / 3 Steps',
+    urgent: true,
+  },
+  {
+    title: 'Decipher Lyra\'s Last Message',
+    world: 'The Shattered Meridian',
+    progress: 'Pending',
+    urgent: false,
+  },
+  {
+    title: 'Restore Sector 4 Gravity Field',
+    world: 'Echo Station 7',
+    progress: '1 / 4 Steps',
+    urgent: true,
+  },
 ];
 
 const memories = [
@@ -69,6 +84,38 @@ const memories = [
   { world: 'The Hollow Crown', memory: 'The king offered you a crown. You refused. He smiled.', time: 'Session 7' },
   { world: 'Kepler Café', memory: 'You left without paying. The cashier didn\'t stop you. No one did.', time: 'Session 2' },
   { world: 'The Shattered Meridian', memory: 'Lyra disappeared mid-sentence. Her chair was still warm.', time: 'Session 3' },
+];
+
+// الأكوان المتاحة للاستكشاف (كروت طولية)
+// كل كون دلوقتي معاه id ثابت بنستخدمه في الـ Link بتاع /universe/[id]
+const explorableUniverses = [
+  {
+    id: 1,
+    code: '#6033',
+    name: 'Aethelgard Zenith',
+    tag: 'CELESTIAL',
+    description: 'Floating crystalline spires suspended above an endless void. Gravity shifts with the wind.',
+    travelers: '3.4k',
+    image: '/image1.png',
+  },
+  {
+    id: 2,
+    code: '#8192',
+    name: 'Neon Abyssal',
+    tag: 'CYBERPUNK',
+    description: 'A subterranean metropolis bathed in eternal bioluminescent rain and synth energy.',
+    travelers: '1.8k',
+    image: '/image2.png',
+  },
+  {
+    id: 3,
+    code: '#1049',
+    name: 'Ashen Chronos',
+    tag: 'TEMPORAL',
+    description: 'A desert realm where time flows backward at sunset and ruins rebuild themselves.',
+    travelers: '920',
+    image: '/image1.png',
+  },
 ];
 
 export default function HomePage() {
@@ -230,91 +277,40 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── PAST UNIVERSES ── */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-['Cinzel',serif] text-[0.95rem] font-bold text-white/70 tracking-wide">
-              Your Universes
-            </h3>
-            <span className="text-[0.7rem] tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              {pastUniverses.length} total
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {pastUniverses.map((u, i) => (
-              <div
-                key={i}
-                className="relative rounded-xl overflow-hidden p-4 flex flex-col gap-2 transition-all duration-200"
-                style={{
-                  background: u.active ? `linear-gradient(135deg, ${u.color}, rgba(0,0,0,0.8))` : 'rgba(255,255,255,0.03)',
-                  border: u.active ? `1px solid ${u.accent}50` : '1px solid rgba(255,255,255,0.06)',
-                  opacity: u.active ? 1 : 0.6,
-                }}
-              >
-                {/* Lock icon for locked universes */}
-                {!u.active && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10 rounded-xl" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    <span className="text-[0.58rem] font-bold tracking-[0.1em] uppercase text-center px-2 leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      Upgrade to enter
-                    </span>
-                  </div>
-                )}
-
-                <span
-                  className="text-[0.58rem] font-bold tracking-[0.18em] uppercase"
-                  style={{ color: u.active ? u.accent : 'rgba(255,255,255,0.3)' }}
-                >
-                  {u.tag}
-                </span>
-                <span className="font-['Cinzel',serif] text-[0.8rem] font-bold leading-tight" style={{ color: u.active ? 'white' : 'rgba(255,255,255,0.5)' }}>
-                  {u.name}
-                </span>
-                <span className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                  {u.sessions} sessions
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── SIGNALS + MEMORIES ── */}
+        {/* ── OBJECTIVES + MEMORIES ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-          {/* SIGNALS */}
+          {/* OBJECTIVES (Replacement for Signals) */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              {/* Signal icon */}
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.25)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
                 </svg>
               </div>
-              <h3 className="font-['Cinzel',serif] text-[0.9rem] font-bold text-white/70">Signals</h3>
+              <h3 className="font-['Cinzel',serif] text-[0.9rem] font-bold text-white/70">Objectives</h3>
             </div>
 
             <div className="flex flex-col gap-2">
-              {signals.map((s, i) => (
+              {objectives.map((o, i) => (
                 <div
                   key={i}
                   className="rounded-xl p-3.5 flex flex-col gap-1.5 transition-all duration-200"
                   style={{
-                    background: s.urgent ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)',
-                    border: s.urgent ? '1px solid rgba(239,68,68,0.15)' : '1px solid rgba(255,255,255,0.06)',
+                    background: o.urgent ? 'rgba(147,51,234,0.06)' : 'rgba(255,255,255,0.03)',
+                    border: o.urgent ? '1px solid rgba(147,51,234,0.2)' : '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[0.62rem] font-bold tracking-[0.15em] uppercase" style={{ color: s.urgent ? 'rgba(239,68,68,0.7)' : 'rgba(255,255,255,0.3)' }}>
-                      {s.urgent && '⚠ '}{s.world}
+                    <span className="text-[0.62rem] font-bold tracking-[0.15em] uppercase" style={{ color: o.urgent ? 'rgba(168,85,247,0.85)' : 'rgba(255,255,255,0.3)' }}>
+                      {o.world}
                     </span>
-                    <span className="text-[0.6rem]" style={{ color: 'rgba(255,255,255,0.2)' }}>{s.time}</span>
+                    <span className="text-[0.62rem] font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>{o.progress}</span>
                   </div>
-                  <p className="text-[0.8rem] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    {s.message}
+                  <p className="text-[0.82rem] font-semibold text-white/90 leading-snug">
+                    {o.title}
                   </p>
                 </div>
               ))}
@@ -324,7 +320,6 @@ export default function HomePage() {
           {/* MEMORIES */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              {/* Memory icon */}
               <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(147,51,234,0.12)', border: '1px solid rgba(147,51,234,0.2)' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9333ea" strokeWidth="2.5">
                   <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
@@ -360,35 +355,129 @@ export default function HomePage() {
 
         </div>
 
-        {/* ── ENTER NEW WORLD ── */}
-        <div className="relative rounded-2xl overflow-hidden min-h-[160px] flex items-center justify-center cursor-pointer group" style={{ border: '1px solid rgba(147,51,234,0.2)' }}>
-
-          {/* BG */}
-          <div className="absolute inset-0 z-0">
-            <Image
-              src="/image2.png"
-              alt="New world"
-              fill
-              className="object-cover object-center opacity-20 transition-all duration-500 group-hover:opacity-30 group-hover:scale-105"
-            />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(30,5,60,0.7) 100%)' }} />
+        {/* ── PAST UNIVERSES ── */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Cinzel',serif] text-[0.95rem] font-bold text-white/70 tracking-wide">
+              Your Universes
+            </h3>
+            <span className="text-[0.7rem] tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              {pastUniverses.length} total
+            </span>
           </div>
 
-          <div className="relative z-10 flex flex-col items-center gap-3 py-10">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110" style={{ background: 'rgba(147,51,234,0.2)', border: '1px solid rgba(147,51,234,0.4)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 8v8M8 12h8"/>
-              </svg>
-            </div>
-            <div className="text-center">
-              <p className="font-['Cinzel',serif] text-[1.1rem] font-bold text-white">Enter a New World</p>
-              <p className="text-[0.78rem] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                The Verse will choose for you.
-              </p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {pastUniverses.map((u, i) => (
+              <div
+                key={i}
+                className="relative rounded-xl overflow-hidden p-4 flex flex-col gap-2 transition-all duration-200"
+                style={{
+                  background: u.active ? `linear-gradient(135deg, ${u.color}, rgba(0,0,0,0.8))` : 'rgba(255,255,255,0.03)',
+                  border: u.active ? `1px solid ${u.accent}50` : '1px solid rgba(255,255,255,0.06)',
+                  opacity: u.active ? 1 : 0.6,
+                }}
+              >
+                {!u.active && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10 rounded-xl" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <span className="text-[0.58rem] font-bold tracking-[0.1em] uppercase text-center px-2 leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Upgrade to enter
+                    </span>
+                  </div>
+                )}
+
+                <span
+                  className="text-[0.58rem] font-bold tracking-[0.18em] uppercase"
+                  style={{ color: u.active ? u.accent : 'rgba(255,255,255,0.3)' }}
+                >
+                  {u.tag}
+                </span>
+                <span className="font-['Cinzel',serif] text-[0.8rem] font-bold leading-tight" style={{ color: u.active ? 'white' : 'rgba(255,255,255,0.5)' }}>
+                  {u.name}
+                </span>
+                <span className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  {u.sessions} sessions
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── UNIVERSES YOU MAY EXPLORE (Portrait Tall Cards) ── */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Cinzel',serif] text-[0.95rem] font-bold text-white/70 tracking-wide">
+              Universes You May Explore
+            </h3>
+            <span className="text-[0.7rem] tracking-[0.12em] uppercase" style={{ color: 'rgba(147,51,234,0.6)' }}>
+              Discover
+            </span>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {explorableUniverses.map((u) => (
+              // الكارت كله بقى Link عشان دوسة الاستكشاف كلها توديك لصفحة الكون
+              <Link
+                key={u.id}
+                href={`/universe/${u.id}`}
+                className="relative rounded-2xl overflow-hidden min-h-[320px] flex flex-col justify-between p-5 group transition-all duration-300 hover:-translate-y-1"
+                style={{ border: '1px solid rgba(147,51,234,0.25)' }}
+              >
+                {/* Background Image Layer */}
+                <div className="absolute inset-0 z-0">
+                  <Image
+                    src={u.image}
+                    alt={u.name}
+                    fill
+                    className="object-cover object-center opacity-30 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-40"
+                  />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(10,2,20,0.85) 60%, rgba(0,0,0,0.95) 100%)' }} />
+                </div>
+
+                {/* Top Header inside Card */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(147,51,234,0.25)', border: '1px solid rgba(147,51,234,0.4)', color: '#a855f7' }}>
+                    {u.code}
+                  </span>
+                  <span className="text-[0.58rem] font-bold tracking-[0.15em] uppercase text-white/40">
+                    {u.tag}
+                  </span>
+                </div>
+
+                {/* Bottom Content inside Card */}
+                <div className="relative z-10 flex flex-col gap-2 mt-auto pt-10">
+                  <h4 className="font-['Cinzel',serif] text-[1.1rem] font-bold text-white leading-tight">
+                    {u.name}
+                  </h4>
+                  <p className="text-[0.75rem] leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    {u.description}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
+                    <div className="flex items-center gap-1.5 text-[0.68rem]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      <span>{u.travelers} travelers</span>
+                    </div>
+
+                    <span className="text-[0.68rem] font-bold tracking-widest uppercase text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
+                      Explore
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
       </div>

@@ -5,12 +5,12 @@ export const createMessages = async ({universeId,userMessage,aiMessage,responseR
         {
             data:[
                 {
-                    universeId,
+                    userUniverseId:universeId,
                     content:userMessage,
                     senderRole:"USER"
                 },
                 {
-                    universeId,
+                    userUniverseId:universeId,
                     content:aiMessage,
                     senderRole:responseRole
                 }
@@ -19,10 +19,10 @@ export const createMessages = async ({universeId,userMessage,aiMessage,responseR
     )
 }
 
-export const getPreviousMessages = async (universeId) => {
+export const getPreviousMessages = async (userUniverseId) => {
     return await prisma.message.findMany({
         where: {
-            universeId,
+            userUniverseId,
         },
         orderBy: {
             created_at: "desc",

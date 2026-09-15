@@ -62,7 +62,6 @@ model Universe {
   id           String   @id @default(uuid())
   universeCode String   @unique
   description  String
-  lore String
   created_at   DateTime @default(now())
 
   userUniverses UserUniverse[]

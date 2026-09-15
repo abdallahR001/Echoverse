@@ -6,7 +6,7 @@ import { generateUniverseCode } from "../utils/generateUniverseCode.js";
 
 export const createUniverse = async (req, res) => {
     try {
-        const {description,lore} = req.body
+        const {description} = req.body
 
         const universeCode = generateUniverseCode();
 
@@ -66,17 +66,14 @@ export const addUniverseInfo = async (req,res,next) =>
     } catch (error) {
         console.log(error)
 
-        return res.status(500).json(
-            {
-                message:"failed to add information."
-            }
-        )
+        next(error)
     }
 }
 
 export const createUserUniverse = async (req,res,next) =>
 {
     try {
+
         const userId = req.user.id
 
         const {universeId} = req.params
@@ -123,6 +120,23 @@ export const createUserUniverse = async (req,res,next) =>
                 message:"entered universe successfully",
                 userUniverse,
                 startingMessage,
+            }
+        )
+    } catch (error) {
+        console.log(error)
+
+        next(error)
+    }
+}
+
+export const getUniverses = async (req,res,next) =>
+{
+    try {
+        const universes = await universeRepository.getUniverses()
+
+        return res.json(
+            {
+                universes
             }
         )
     } catch (error) {

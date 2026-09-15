@@ -1,122 +1,81 @@
 export const buildPrompt = ({
     universe,
     previousMessages,
+    relevantMemories = [],
+    relevantUniverseInfo = [],
     userMessage,
     event,
 }) => {
 
-    console.log(event)
-
-const EVENT_PROMPTS = {
-    GLITCH: `
-=========================
-MANDATORY EVENT
-=========================
-A reality glitch MUST occur during this response.
-
-The glitch must be noticeable but believable inside the current scene.
-It may affect the environment, dialogue, sounds, objects, people or reality itself.
-Do not explain the glitch.
-Do not make it resolve immediately.
+    const EVENT_PROMPTS = {
+        GLITCH: `
+A reality glitch MUST naturally occur. Do not explain or immediately resolve it.
 `,
 
-    NEW_CHARACTER: `
-=========================
-MANDATORY EVENT
-=========================
-A new believable character MUST appear naturally during this response.
-
-The character must participate in the current scene.
-Do not force the introduction if it would feel unnatural.
+        NEW_CHARACTER: `
+A believable new character MUST naturally enter the current scene.
 `,
 
-    SIGNAL: `
-=========================
-MANDATORY EVENT
-=========================
-A mysterious signal MUST appear during this response.
-
-The signal should attract attention naturally.
-It may come from the Diver Watch, the environment or another believable source.
-It should raise curiosity without fully explaining itself.
-`
-};
+        SIGNAL: `
+The Diver Watch MUST detect a mysterious signal. Do not reveal its source.
+`,
+    };
 
     let prompt = `
 You are the storyteller of Echoverse.
 
-## UNIVERSE
+UNIVERSE:
 ${universe.description}
 
-## RULES
-- Stay completely inside the universe.
-- Never mention AI or break immersion.
-- Continue the story naturally.
-- Never control the player's actions, thoughts or dialogue.
-- Keep continuity with previous messages.
-- narratorResponse is required and contains narration, dialogue or both.
-- systemResponse is ONLY for the Diver Watch. Use null if nothing should be reported.
-- Reply in 60-100 words unless the story genuinely needs more.
+WORLD RULES:
+- Stay immersive and consistent with the universe.
+- Never mention AI, Echoverse, the Dive, or the player's identity as a Diver.
+- Never control the player's thoughts, dialogue, or decisions.
+- Continue naturally from the previous history.
+- Narrator response must be 50-70 words.
 - Return ONLY valid JSON.
-- Never return markdown or explanations.
-- narratorResponse.senderRole MUST ALWAYS be exactly "AI".
-- If systemResponse exists, systemResponse.senderRole MUST ALWAYS be exactly "SYSTEM".
-- Never use any other senderRole values such as "USER", "ASSISTANT", "BOT", "NARRATOR" or anything else.
-- characters doesnt know about echoverse and the universes except that if there is a glitch or somehting.
-- characters doesnt know that the player is a diver and they doesnt know the dive
-- If a SPECIAL EVENT is provided below, it becomes a mandatory part of this response.
-- The event must happen during this scene.
-- Blend it naturally into the story instead of mentioning it separately.
-- Never ignore a SPECIAL EVENT.
+- narratorResponse.senderRole = "AI".
+- systemResponse.senderRole = "SYSTEM".
+- Anything shown on the Diver Watch belongs in systemResponse.
 
-## IMPORTANT MEMORIES
-Create memories ONLY when the information could matter later, including:
-- New character names.
-- Character facts, relationships or goals.
-- New locations.
-- Important objects.
-- Important events.
-- Secrets, clues, signals or mysteries.
-- Promises, quests or objectives.
-- Anything likely to affect future conversations.
+MEMORIES:
+${relevantMemories.length
+    ? relevantMemories
+        .map((memory, i) => `${i + 1}. ${memory.content}`)
+        .join("\n")
+    : "None"}
 
-## ECHOVERSE
-The player is a Diver using the Dive machine.
-System notifications come only from the Diver Watch (health, warnings, signals, universe status).
+UNIVERSE KNOWLEDGE:
+${relevantUniverseInfo.length
+    ? relevantUniverseInfo
+        .map((info, i) => `${i + 1}. ${info.content}`)
+        .join("\n")
+    : "None"}
 
+MEMORY CREATION:
+Create a memory only if the information is likely to matter later.
+Prioritize characters, relationships, locations, objects, clues, quests, goals,
+discoveries, promises, and major events. Give each memory an importance score 1-10.
 `;
 
     if (EVENT_PROMPTS[event]) {
-        prompt += EVENT_PROMPTS[event];
+        prompt += `
+MANDATORY EVENT:
+${EVENT_PROMPTS[event]}
+`;
     }
 
     prompt += `
+RECENT HISTORY:
+${previousMessages.length
+    ? previousMessages.map(m => `${m.senderRole}: ${m.content}`).join("\n")
+    : "No previous history."}
 
-## HISTORY
-${previousMessages
-    .map(m => `${m.senderRole}: ${m.content}`)
-    .join("\n")}
-
-## PLAYER
-USER: ${userMessage}
-
-## OUTPUT
-{
-  "narratorResponse": {
-    "senderRole": "AI",
-    "content": "string"
-  },
-  "systemResponse": {
-    "senderRole": "SYSTEM",
-    "content": "string"
-  } | null,
-  "importantMemories": [
-    {
-      "content": "string"
-    }
-  ]
-}
+PLAYER:
+${userMessage}
 `;
+
+    console.log(prompt);
 
     return prompt;
 };

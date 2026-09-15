@@ -1,37 +1,30 @@
-import { generateEmbedding } from "./src/services/embeddingService.js"
-import { addUniverseInfo, searchUniverseInfo } from "./src/repositories/universe.repository.js"
+import "dotenv/config"
+
+import { Groq } from "groq-sdk"
+
+const groq = new Groq(
+  {
+    apiKey:process.env.TEST_API_KEY
+  }
+)
 
 
-const universeId = "981ffab1-5b72-4a3f-82d9-c08251308d7c";
+const stream = await groq.chat.completions.create(
+  {
+    model:"openai/gpt-oss-120b",
+    messages:[
+      {
+        role:"user",
+        content:"write a short analog horror story"
+      }
+    ],
+    stream:true
+  }
+)
 
-
-const content = 
-"the king hated tomatoes";
-
-
-const embedding = await generateEmbedding(content);
-
-
-const info = await addUniverseInfo({
-  universeId,
-  content,
-  embedding
-});
-
-
-console.log(info);
-
-const question = "hi";
-
-
-const questionEmbedding = await generateEmbedding(question);
-
-
-const results = await searchUniverseInfo({
-  universeId,
-  embedding: questionEmbedding
-});
-
-
-console.log("\nSearch Results:");
-console.log(results);
+for await (const chunk of stream)
+{
+  const text = (chunk.choices[0]?.delta?.content || "")
+  
+  process.stdout.write(text)
+}

@@ -1,11 +1,10 @@
 import prisma from "../config/prisma.js"
 
-export const createUniverse = async ({universeCode,description,lore}) =>
+export const createUniverse = async ({universeCode,description}) =>
 {
     return await prisma.universe.create({
         data:{
             description,
-            lore,
             universeCode,
         }
     })
@@ -18,6 +17,11 @@ export const getUniverseById = async (universeId) =>
             id:universeId
         }
     })
+}
+
+export const getUniverses = async() =>
+{
+  return await prisma.universe.findMany()
 }
 
 export async function addUniverseInfo({
@@ -60,8 +64,7 @@ export async function addUniverseInfo({
 export async function searchUniverseInfo({
   universeId,
   embedding,
-  limit = 5,
-  threshold = 0.75
+  limit = 3,
 }) {
 
   const vector = `[${embedding.join(",")}]`;
@@ -79,9 +82,7 @@ export async function searchUniverseInfo({
   `;
 
 
-  return results.filter(
-    item => Number(item.similarity) >= threshold
-  );
+  return results
 }
 
 export const createUserUniverse = async({userId,universeId}) =>
@@ -102,6 +103,9 @@ export const getUserUniverse = async({userId,universeId}) =>
       {
         userId,universeId
       }
+    },
+    include:{
+      universe:true,
     }
   })
 }

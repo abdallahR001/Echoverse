@@ -1,38 +1,121 @@
-import OpenAI from "openai";
 
-const openai = new OpenAI({
-    apiKey: process.env.AI_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1",
+import Groq from "groq-sdk";
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
-export const generateAIResponse = async ({
-    universe,
-    previousMessages,
-    userMessage,
-    event,
-    prompt
-}) => {
+export async function generateAIResponse({
+  prompt,
+}) {
+  const response = await groq.chat.completions.create({
+    model: "openai/gpt-oss-120b",
 
-    
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
 
-    const response = await openai.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+    temperature: 1,
 
-        messages: [
-            {
-                role: "system",
-                content: prompt,
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "echoverse_response",
+        strict: true,
+
+        schema: {
+          type: "object",
+
+          properties: {
+            narratorResponse: {
+              type: "object",
+
+              properties: {
+                senderRole: {
+                  type: "string",
+                  enum: ["AI"],
+                },
+
+                content: {
+                  type: "string",
+                },
+              },
+
+              required: [
+                "senderRole",
+                "content",
+              ],
+
+              additionalProperties: false,
             },
-        ],
 
-        response_format: {
-            type: "json_object",
+            systemResponse: {
+              type: ["object", "null"],
+
+              properties: {
+                senderRole: {
+                  type: "string",
+                  enum: ["SYSTEM"],
+                },
+
+                content: {
+                  type: "string",
+                },
+              },
+
+              required: [
+                "senderRole",
+                "content",
+              ],
+
+              additionalProperties: false,
+            },
+
+            importantMemories: {
+              type: "array",
+
+              items: {
+                type: "object",
+
+                properties: {
+                  content: {
+                    type: "string",
+                  },
+
+                  importance: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 10,
+                  },
+                },
+
+                required: [
+                  "content",
+                  "importance",
+                ],
+
+                additionalProperties: false,
+              },
+            },
+          },
+
+          required: [
+            "narratorResponse",
+            "systemResponse",
+            "importantMemories",
+          ],
+
+          additionalProperties: false,
         },
+      },
+    },
+  });
 
-        temperature: 1,
-    });
+  return JSON.parse(
+    response.choices[0].message.content
+  );
+}
 
-    const aiResponse = JSON.parse(response.choices[0].message.content);
-
-    return aiResponse
-};
