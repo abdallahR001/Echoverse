@@ -1,15 +1,22 @@
-import { ShieldIcon, AlertTriangleIcon, CloseIcon } from '../components/Icons';
+import { ShieldIcon, AlertTriangleIcon, CloseIcon, TargetIcon } from '../components/Icons';
 
 /* ────────────────────────────────────────────────────────────
-   Fallback stats — لحد ما الباك اند يرجع danger/stability/
-   characters/memories، بنستخدم قيم افتراضية بدل الكراش
+   Fallback stats — لحد ما الباك اند يرجع danger/stability،
+   بنستخدم قيم افتراضية بدل الكراش
    ──────────────────────────────────────────────────────────── */
 
 const fallbackStats = {
   danger: 50,
   stability: 50,
-  characters: [],
-  memories: [],
+};
+
+/* ────────────────────────────────────────────────────────────
+   Current Objective — HARD-CODED لحد ما الباك اند يرجعه
+   ──────────────────────────────────────────────────────────── */
+
+const currentObjective = {
+  title: 'Find the Source of the Signal',
+  status: 'ACTIVE',
 };
 
 export default function UniverseSidebar({ sidebarOpen, onClose, universeDescription }) {
@@ -130,43 +137,37 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
         </div>
       </div>
 
-      {/* Characters — placeholder until backend provides it */}
+      {/* Current Objective — hard-coded for now */}
       <div className="flex flex-col gap-3">
-        <h3 className="font-['Cinzel',serif] text-[0.8rem] font-bold text-white/70">
-          Characters Encountered
-        </h3>
+        <span
+          className="flex items-center gap-1.5 text-[0.65rem] font-bold tracking-[0.15em] uppercase"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+        >
+          <TargetIcon color="rgba(216,180,254,0.8)" />
+          Current Objective
+        </span>
 
-        <div className="flex flex-col gap-2">
-          {fallbackStats.characters.length === 0 && (
-            <p
-              className="text-[0.72rem]"
-              style={{
-                color: 'rgba(255,255,255,0.3)',
-              }}
-            >
-              No one has revealed themselves yet.
-            </p>
-          )}
-        </div>
-      </div>
+        <div
+          className="flex items-center justify-between gap-2 rounded-xl p-3"
+          style={{
+            background: 'rgba(147,51,234,0.08)',
+            border: '1px solid rgba(147,51,234,0.2)',
+          }}
+        >
+          <h4 className="font-['Cinzel',serif] text-[0.85rem] font-bold text-white/85">
+            {currentObjective.title}
+          </h4>
 
-      {/* Memory Slots — placeholder until backend provides it */}
-      <div className="flex flex-col gap-3">
-        <h3 className="font-['Cinzel',serif] text-[0.8rem] font-bold text-white/70">
-          Memory Fragments
-        </h3>
-
-        <div className="flex flex-col gap-2">
-          {fallbackStats.memories.length === 0 && (
-            <p
-              className="text-[0.72rem]"
-              style={{
-                color: 'rgba(255,255,255,0.3)',
-              }}
-            >
-              No memories recorded yet.
-            </p>
-          )}
+          <span
+            className="shrink-0 text-[0.6rem] font-bold tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
+            style={{
+              color: '#c084fc',
+              background: 'rgba(147,51,234,0.15)',
+              border: '1px solid rgba(147,51,234,0.35)',
+            }}
+          >
+            {currentObjective.status}
+          </span>
         </div>
       </div>
     </aside>
