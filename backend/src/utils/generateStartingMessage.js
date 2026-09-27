@@ -1,7 +1,7 @@
-import { GoogleGenAI , Type } from "@google/genai";
+import Groq from "groq-sdk";
 
-const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function generateStartingMessage({ description, lore }) {
@@ -71,36 +71,52 @@ If the exact location cannot be determined, return:
 "unknown"
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.6-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-  type: Type.OBJECT,
-  properties: {
-    startingMessage: {
-      type: Type.STRING,
-      description:
-        "A short cinematic opening scene (40-90 words) that starts with a compelling hook."
+  const response = await groq.chat.completions.create({
+    model: "openai/gpt-oss-120b",
+
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+
+    temperature: 1,
+
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "starting_message",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            startingMessage: {
+              type: "string",
+              description:
+                "A short cinematic opening scene (40-90 words) that starts with a compelling hook.",
+            },
+
+            currentLocation: {
+              type: "string",
+              description:
+                'The player\'s current location. Return a concise place name if known, otherwise return "unknown".',
+            },
+          },
+
+          required: ["startingMessage", "currentLocation"],
+          additionalProperties: false,
+        },
+      },
     },
-    currentLocation: {
-      type: Type.STRING,
-      description:
-        'The player\'s current location. Return a concise place name if known, otherwise return "unknown".'
-    }
-  },
-  required: ["startingMessage", "currentLocation"]
-}
-    }
   });
 
-  const jsonText = response.candidates[0].content.parts[0].text
+  const jsonText = response.choices[0].message.content;
 
-  const data = JSON.parse(jsonText)
+  const data = JSON.parse(jsonText);
 
   return {
-  startingMessage: data.startingMessage,
-  currentLocation: data.currentLocation
-};
+    startingMessage: data.startingMessage,
+    currentLocation: data.currentLocation,
+  };
 }

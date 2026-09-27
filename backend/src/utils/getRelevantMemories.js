@@ -13,13 +13,6 @@ export const getRelevantMemoriesIfExist = async ({
         limit: 5,
     });
 
-    console.log(
-    memories.map(m => ({
-        distance: m.distance,
-        content: m.content
-    }))
-);
-
     return memories
         // .filter(memory => memory.distance <= MEMORY_DISTANCE_THRESHOLD)
         // .map(memory => memory.content);

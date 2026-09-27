@@ -1,23 +1,27 @@
 import prisma from "../config/prisma.js"
-export const createMessages = async ({universeId,userMessage,aiMessage,responseRole}) =>
-{
-    return await prisma.message.createMany(
-        {
-            data:[
-                {
-                    userUniverseId:universeId,
-                    content:userMessage,
-                    senderRole:"USER"
-                },
-                {
-                    userUniverseId:universeId,
-                    content:aiMessage,
-                    senderRole:responseRole
-                }
-            ]
+export const createMessages = async ({
+    universeId,
+    userMessage,
+    aiMessage,
+    responseRole
+}) => {
+
+    await prisma.message.create({
+        data: {
+            userUniverseId: universeId,
+            content: userMessage,
+            senderRole: "USER"
         }
-    )
-}
+    });
+
+    await prisma.message.create({
+        data: {
+            userUniverseId: universeId,
+            content: aiMessage,
+            senderRole: responseRole
+        }
+    });
+};
 
 export const getPreviousMessages = async (userUniverseId) => {
     return await prisma.message.findMany({
@@ -25,7 +29,7 @@ export const getPreviousMessages = async (userUniverseId) => {
             userUniverseId,
         },
         orderBy: {
-            created_at: "desc",
+            created_at: "desc"
         },
         take: 3,
     });

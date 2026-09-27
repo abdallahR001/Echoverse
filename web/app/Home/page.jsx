@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 const greetings = [
@@ -12,52 +13,16 @@ const greetings = [
   'Another echo begins.',
 ];
 
-const currentUniverse = {
-  name: 'The Shattered Meridian',
-  description:
-    'A fractured city suspended between dimensions. Time moves differently here — an hour inside can mean days outside. You arrived three sessions ago. You still don\'t know why.',
-  characters: [
-    { name: 'Lyra', color: '#9333ea' },
-    { name: 'Kael', color: '#6b21a8' },
-    { name: 'The Archivist', color: '#4c1d95' },
-    { name: 'Mira', color: '#7c3aed' },
-    { name: 'Ghost', color: '#3b0764' },
-  ],
-};
-
-const pastUniverses = [
-  {
-    name: 'Echo Station 7',
-    tag: 'SCI-FI',
-    sessions: 4,
-    color: '#1e1b4b',
-    accent: '#6366f1',
-  },
-  {
-    name: 'The Hollow Crown',
-    tag: 'FANTASY',
-    sessions: 7,
-    color: '#1c1917',
-    accent: '#a16207',
-  },
-  {
-    name: 'Kepler Café',
-    tag: 'THRILLER',
-    sessions: 2,
-    color: '#0f172a',
-    accent: '#0ea5e9',
-  },
-  {
-    name: 'The Shattered Meridian',
-    tag: 'SURREAL',
-    sessions: 3,
-    color: '#1a0a2e',
-    accent: '#9333ea',
-    active: true,
-  },
+// لسه مش جاية من الباك اند — سايبها زي ما هي لحد ما الـ endpoint يرجعها
+const mockCharacters = [
+  { name: 'Lyra', color: '#9333ea' },
+  { name: 'Kael', color: '#6b21a8' },
+  { name: 'The Archivist', color: '#4c1d95' },
+  { name: 'Mira', color: '#7c3aed' },
+  { name: 'Ghost', color: '#3b0764' },
 ];
 
-// الأهداف الرئيسية داخل الكون الحالي (بديل الـ Signals)
+// الأهداف الرئيسية داخل الكون الحالي (بديل الـ Signals) — لسه mock
 const objectives = [
   {
     title: 'Locate the Meridian Core',
@@ -79,6 +44,7 @@ const objectives = [
   },
 ];
 
+// لسه mock
 const memories = [
   { world: 'Echo Station 7', memory: 'You found a message written in your own handwriting. You have no memory of writing it.', time: 'Session 4' },
   { world: 'The Hollow Crown', memory: 'The king offered you a crown. You refused. He smiled.', time: 'Session 7' },
@@ -86,47 +52,107 @@ const memories = [
   { world: 'The Shattered Meridian', memory: 'Lyra disappeared mid-sentence. Her chair was still warm.', time: 'Session 3' },
 ];
 
-// الأكوان المتاحة للاستكشاف (كروت طولية)
-// كل كون دلوقتي معاه id ثابت بنستخدمه في الـ Link بتاع /universe/[id]
-const explorableUniverses = [
-  {
-    id: 1,
-    code: '#6033',
-    name: 'Aethelgard Zenith',
-    tag: 'CELESTIAL',
-    description: 'Floating crystalline spires suspended above an endless void. Gravity shifts with the wind.',
-    travelers: '3.4k',
-    image: '/image1.png',
-  },
-  {
-    id: 2,
-    code: '#8192',
-    name: 'Neon Abyssal',
-    tag: 'CYBERPUNK',
-    description: 'A subterranean metropolis bathed in eternal bioluminescent rain and synth energy.',
-    travelers: '1.8k',
-    image: '/image2.png',
-  },
-  {
-    id: 3,
-    code: '#1049',
-    name: 'Ashen Chronos',
-    tag: 'TEMPORAL',
-    description: 'A desert realm where time flows backward at sunset and ruins rebuild themselves.',
-    travelers: '920',
-    image: '/image1.png',
-  },
-];
+// Placeholder image used until the backend returns real cover art
+const PLACEHOLDER_IMAGE = '/image1.png';
+
+const API_URL = 'http://localhost:4000/api/home';
+const ENTER_UNIVERSE_URL = 'http://localhost:4000/api/universes/enter';
+
+function formatDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+}
 
 export default function HomePage() {
+  const router = useRouter();
+
   const [greeting, setGreeting] = useState('');
+  const [homeData, setHomeData] = useState(null);
+  const [loadingHome, setLoadingHome] = useState(true);
+  const [homeError, setHomeError] = useState(false);
+
+  // Popup shown before entering a new universe from "Universes You May Explore"
+  const [selectedUniverse, setSelectedUniverse] = useState(null);
+  const [entering, setEntering] = useState(false);
+  const [enterError, setEnterError] = useState('');
 
   useEffect(() => {
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
   }, []);
 
-  const visibleChars = currentUniverse.characters.slice(0, 3);
-  const extraChars = currentUniverse.characters.length - 3;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchHome() {
+      try {
+        setLoadingHome(true);
+        setHomeError(false);
+        const res = await fetch(API_URL, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setHomeData(data);
+      } catch (err) {
+        console.error('Failed to fetch home data:', err);
+        if (!cancelled) setHomeError(true);
+      } finally {
+        if (!cancelled) setLoadingHome(false);
+      }
+    }
+
+    fetchHome();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /* ────────────────────────────────────────────────────────────
+     ENTER UNIVERSE — confirms via popup, POSTs to /api/enter/:id,
+     then takes the user straight into the chat
+     ──────────────────────────────────────────────────────────── */
+
+  async function handleConfirmEnter() {
+    if (!selectedUniverse || entering) return;
+
+    setEntering(true);
+    setEnterError('');
+
+    try {
+      const res = await fetch(`${ENTER_UNIVERSE_URL}/${selectedUniverse.id}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.message || `Request failed with status ${res.status}`);
+      }
+
+      router.push(`/universe/${selectedUniverse.id}`);
+    } catch (err) {
+      console.error('Failed to enter universe:', err);
+      setEnterError(err.message || 'Something went wrong entering this universe.');
+      setEntering(false);
+    }
+  }
+
+  function closeEnterModal() {
+    if (entering) return;
+    setSelectedUniverse(null);
+    setEnterError('');
+  }
+
+  const userName = homeData?.user?.name || 'Traveler';
+  const current = homeData?.currentUniverse ?? null;
+  const enteredUniverses = homeData?.enteredUniverses ?? [];
+  const explorableUniverses = homeData?.universesToExplore ?? [];
+
+  const visibleChars = mockCharacters.slice(0, 3);
+  const extraChars = mockCharacters.length - 3;
 
   return (
     <main className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -151,7 +177,7 @@ export default function HomePage() {
                   className="w-full h-full flex items-center justify-center text-xl font-black"
                   style={{ background: 'linear-gradient(135deg, #4c1d95, #7c3aed)' }}
                 >
-                  A
+                  {userName[0]?.toUpperCase() ?? 'A'}
                 </div>
               </div>
               {/* online dot */}
@@ -159,7 +185,7 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <span className="font-['Cinzel',serif] text-[1rem] font-bold text-white">Abdullah</span>
+              <span className="font-sans text-[1rem] font-bold text-white">{userName}</span>
 
               {/* Plan badge */}
               <div className="flex items-center gap-1.5">
@@ -184,8 +210,8 @@ export default function HomePage() {
           <p className="text-[0.78rem] font-semibold tracking-[0.2em] uppercase" style={{ color: 'rgba(147,51,234,0.6)' }}>
             {greeting}
           </p>
-          <h1 className="font-['Cinzel',serif] text-[2.2rem] font-black leading-tight" style={{ color: 'white' }}>
-            Hello, Abdullah.
+          <h1 className="font-sans text-[2.2rem] font-black leading-tight" style={{ color: 'white' }}>
+            Hello, {userName}.
           </h1>
         </div>
 
@@ -209,23 +235,25 @@ export default function HomePage() {
               <span className="text-[0.65rem] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Current Universe
               </span>
-              <h2 className="font-['Cinzel',serif] text-[1.5rem] font-black text-white leading-tight">
-                {currentUniverse.name}
+              <h2 className="font-sans text-[1.5rem] font-black text-white leading-tight">
+                {current?.universe?.universeCode ?? (loadingHome ? '...' : 'No active universe')}
               </h2>
             </div>
 
             {/* Active signal */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-emerald-400">
-                Active
-              </span>
-            </div>
+            {current && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-emerald-400">
+                  Active
+                </span>
+              </div>
+            )}
           </div>
 
           {/* DESCRIPTION */}
           <p className="relative z-10 text-[0.88rem] leading-[1.75] mt-3" style={{ color: 'rgba(255,255,255,0.5)', maxWidth: '520px' }}>
-            {currentUniverse.description}
+            {current?.universe?.description ?? (loadingHome ? '' : 'Explore a universe to start your journey.')}
           </p>
 
           {/* BOTTOM ROW */}
@@ -254,25 +282,36 @@ export default function HomePage() {
                 )}
               </div>
               <span className="text-[0.72rem]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                {currentUniverse.characters.length} characters met
+                {mockCharacters.length} characters met
               </span>
             </div>
 
             {/* Continue button */}
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.8rem] font-bold tracking-[0.08em] uppercase text-white transition-all duration-200 hover:-translate-y-0.5"
-              style={{
-                background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
-                boxShadow: '0 0 20px rgba(147,51,234,0.3)',
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 35px rgba(147,51,234,0.55)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(147,51,234,0.3)'}
-            >
-              Continue
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
+            {current ? (
+              <Link
+                href={`/universe/${current.universe.id}`}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.8rem] font-bold tracking-[0.08em] uppercase text-white transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
+                  boxShadow: '0 0 20px rgba(147,51,234,0.3)',
+                }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 35px rgba(147,51,234,0.55)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(147,51,234,0.3)'}
+              >
+                Continue
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[0.8rem] font-bold tracking-[0.08em] uppercase text-white/40 cursor-not-allowed"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
+                No Universe Yet
+              </button>
+            )}
 
           </div>
         </div>
@@ -290,7 +329,7 @@ export default function HomePage() {
                   <circle cx="12" cy="12" r="2" />
                 </svg>
               </div>
-              <h3 className="font-['Cinzel',serif] text-[0.9rem] font-bold text-white/70">Objectives</h3>
+              <h3 className="font-sans text-[0.9rem] font-bold text-white/70">Objectives</h3>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -326,7 +365,7 @@ export default function HomePage() {
                   <path d="M12 6v6l4 2"/>
                 </svg>
               </div>
-              <h3 className="font-['Cinzel',serif] text-[0.9rem] font-bold text-white/70">Memories</h3>
+              <h3 className="font-sans text-[0.9rem] font-bold text-white/70">Memories</h3>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -355,61 +394,75 @@ export default function HomePage() {
 
         </div>
 
-        {/* ── PAST UNIVERSES ── */}
+        {/* ── YOUR UNIVERSES (fetched from API) ── */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-['Cinzel',serif] text-[0.95rem] font-bold text-white/70 tracking-wide">
+            <h3 className="font-sans text-[0.95rem] font-bold text-white/70 tracking-wide">
               Your Universes
             </h3>
             <span className="text-[0.7rem] tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              {pastUniverses.length} total
+              {enteredUniverses.length} total
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {pastUniverses.map((u, i) => (
-              <div
-                key={i}
-                className="relative rounded-xl overflow-hidden p-4 flex flex-col gap-2 transition-all duration-200"
-                style={{
-                  background: u.active ? `linear-gradient(135deg, ${u.color}, rgba(0,0,0,0.8))` : 'rgba(255,255,255,0.03)',
-                  border: u.active ? `1px solid ${u.accent}50` : '1px solid rgba(255,255,255,0.06)',
-                  opacity: u.active ? 1 : 0.6,
-                }}
-              >
-                {!u.active && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10 rounded-xl" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    <span className="text-[0.58rem] font-bold tracking-[0.1em] uppercase text-center px-2 leading-tight" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      Upgrade to enter
-                    </span>
-                  </div>
-                )}
+          {loadingHome && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="relative rounded-xl overflow-hidden min-h-[92px] animate-pulse"
+                  style={{ border: '1px solid rgba(147,51,234,0.1)', background: 'rgba(147,51,234,0.04)' }}
+                />
+              ))}
+            </div>
+          )}
 
-                <span
-                  className="text-[0.58rem] font-bold tracking-[0.18em] uppercase"
-                  style={{ color: u.active ? u.accent : 'rgba(255,255,255,0.3)' }}
-                >
-                  {u.tag}
-                </span>
-                <span className="font-['Cinzel',serif] text-[0.8rem] font-bold leading-tight" style={{ color: u.active ? 'white' : 'rgba(255,255,255,0.5)' }}>
-                  {u.name}
-                </span>
-                <span className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                  {u.sessions} sessions
-                </span>
-              </div>
-            ))}
-          </div>
+          {!loadingHome && enteredUniverses.length === 0 && !homeError && (
+            <div
+              className="rounded-xl p-5 text-center text-[0.8rem]"
+              style={{ border: '1px solid rgba(147,51,234,0.15)', color: 'rgba(255,255,255,0.35)' }}
+            >
+              You haven't entered any universes yet.
+            </div>
+          )}
+
+          {!loadingHome && enteredUniverses.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {enteredUniverses.map((u) => {
+                const isActive = current?.id === u.id;
+                return (
+                  <Link
+                    key={u.id}
+                    href={`/universe/${u.universe.id}`}
+                    className="relative rounded-xl overflow-hidden p-4 flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5"
+                    style={{
+                      background: isActive ? 'linear-gradient(135deg, #1a0a2e, rgba(0,0,0,0.8))' : 'rgba(255,255,255,0.03)',
+                      border: isActive ? '1px solid rgba(147,51,234,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <span
+                      className="text-[0.58rem] font-bold tracking-[0.18em] uppercase"
+                      style={{ color: isActive ? '#9333ea' : 'rgba(255,255,255,0.3)' }}
+                    >
+                      {u.status}
+                    </span>
+                    <span className="font-sans text-[0.8rem] font-bold leading-tight text-white">
+                      {u.universe.universeCode}
+                    </span>
+                    <span className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                      Since {formatDate(u.created_at)}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── UNIVERSES YOU MAY EXPLORE (Portrait Tall Cards) ── */}
+        {/* ── UNIVERSES YOU MAY EXPLORE (fetched from API) ── */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-['Cinzel',serif] text-[0.95rem] font-bold text-white/70 tracking-wide">
+            <h3 className="font-sans text-[0.95rem] font-bold text-white/70 tracking-wide">
               Universes You May Explore
             </h3>
             <span className="text-[0.7rem] tracking-[0.12em] uppercase" style={{ color: 'rgba(147,51,234,0.6)' }}>
@@ -417,70 +470,174 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {explorableUniverses.map((u) => (
-              // الكارت كله بقى Link عشان دوسة الاستكشاف كلها توديك لصفحة الكون
-              <Link
-                key={u.id}
-                href={`/universe/${u.id}`}
-                className="relative rounded-2xl overflow-hidden min-h-[320px] flex flex-col justify-between p-5 group transition-all duration-300 hover:-translate-y-1"
-                style={{ border: '1px solid rgba(147,51,234,0.25)' }}
-              >
-                {/* Background Image Layer */}
-                <div className="absolute inset-0 z-0">
-                  <Image
-                    src={u.image}
-                    alt={u.name}
-                    fill
-                    className="object-cover object-center opacity-30 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-40"
-                  />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(10,2,20,0.85) 60%, rgba(0,0,0,0.95) 100%)' }} />
-                </div>
+          {/* Loading state */}
+          {loadingHome && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="relative rounded-2xl overflow-hidden min-h-[320px] animate-pulse"
+                  style={{ border: '1px solid rgba(147,51,234,0.15)', background: 'rgba(147,51,234,0.05)' }}
+                />
+              ))}
+            </div>
+          )}
 
-                {/* Top Header inside Card */}
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(147,51,234,0.25)', border: '1px solid rgba(147,51,234,0.4)', color: '#a855f7' }}>
-                    {u.code}
-                  </span>
-                  <span className="text-[0.58rem] font-bold tracking-[0.15em] uppercase text-white/40">
-                    {u.tag}
-                  </span>
-                </div>
+          {/* Error state */}
+          {!loadingHome && homeError && (
+            <div
+              className="rounded-2xl p-6 text-center text-[0.85rem]"
+              style={{ border: '1px solid rgba(147,51,234,0.2)', color: 'rgba(255,255,255,0.4)' }}
+            >
+              Couldn't reach the universes right now. Try again in a moment.
+            </div>
+          )}
 
-                {/* Bottom Content inside Card */}
-                <div className="relative z-10 flex flex-col gap-2 mt-auto pt-10">
-                  <h4 className="font-['Cinzel',serif] text-[1.1rem] font-bold text-white leading-tight">
-                    {u.name}
-                  </h4>
-                  <p className="text-[0.75rem] leading-relaxed line-clamp-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                    {u.description}
-                  </p>
+          {/* Empty state */}
+          {!loadingHome && !homeError && explorableUniverses.length === 0 && (
+            <div
+              className="rounded-2xl p-6 text-center text-[0.85rem]"
+              style={{ border: '1px solid rgba(147,51,234,0.2)', color: 'rgba(255,255,255,0.4)' }}
+            >
+              No universes to explore yet.
+            </div>
+          )}
 
-                  <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10">
-                    <div className="flex items-center gap-1.5 text-[0.68rem]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                      </svg>
-                      <span>{u.travelers} travelers</span>
-                    </div>
+          {/* Loaded universes */}
+          {!loadingHome && !homeError && explorableUniverses.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {explorableUniverses.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => {
+                    setEnterError('');
+                    setSelectedUniverse(u);
+                  }}
+                  className="relative rounded-2xl overflow-hidden min-h-[320px] flex flex-col justify-between p-5 group transition-all duration-300 hover:-translate-y-1 text-left"
+                  style={{ border: '1px solid rgba(147,51,234,0.25)' }}
+                >
+                  {/* Background Image Layer */}
+                  <div className="absolute inset-0 z-0">
+                    <Image
+                      src={PLACEHOLDER_IMAGE}
+                      alt={u.universeCode}
+                      fill
+                      className="object-cover object-center opacity-30 transition-transform duration-500 group-hover:scale-105 group-hover:opacity-40"
+                    />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(10,2,20,0.85) 60%, rgba(0,0,0,0.95) 100%)' }} />
+                  </div>
 
-                    <span className="text-[0.68rem] font-bold tracking-widest uppercase text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
-                      Explore
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
+                  {/* Top Header inside Card */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <span className="text-[0.65rem] font-bold font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(147,51,234,0.25)', border: '1px solid rgba(147,51,234,0.4)', color: '#a855f7' }}>
+                      {u.universeCode}
                     </span>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+                  {/* Bottom Content inside Card */}
+                  <div className="relative z-10 flex flex-col gap-2 mt-auto pt-10">
+                    <p className="text-[0.75rem] leading-relaxed line-clamp-4" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                      {u.description}
+                    </p>
+
+                    <div className="flex items-center justify-end pt-3 mt-1 border-t border-white/10">
+                      <span className="text-[0.68rem] font-bold tracking-widest uppercase text-purple-400 group-hover:text-purple-300 flex items-center gap-1">
+                        Explore
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
+
+      {/* ══════════ ENTER UNIVERSE CONFIRMATION POPUP ══════════ */}
+
+      {selectedUniverse && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-6"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+          onClick={closeEnterModal}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[460px] rounded-2xl p-6 flex flex-col gap-4"
+            style={{ background: '#0f0620', border: '1px solid rgba(147,51,234,0.3)' }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-[0.6rem] font-bold font-mono tracking-[0.15em] uppercase" style={{ color: '#a855f7' }}>
+                  {selectedUniverse.universeCode}
+                </span>
+                <h3 className="font-sans text-[1.15rem] font-bold text-white leading-tight">
+                  Enter this universe?
+                </h3>
+              </div>
+              <button
+                onClick={closeEnterModal}
+                aria-label="Close"
+                className="text-[0.9rem] shrink-0"
+                style={{ color: 'rgba(255,255,255,0.4)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-[0.82rem] leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              {selectedUniverse.description}
+            </p>
+
+            {/* Free plan warning */}
+            <div
+              className="flex items-start gap-2.5 rounded-xl p-3.5"
+              style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-[0.75rem] leading-relaxed" style={{ color: 'rgba(253,230,138,0.9)' }}>
+                You're on the <strong>Free Plan</strong>. Entering this universe will lock the
+                universes you've already entered — you won't be able to continue them until you
+                upgrade.
+              </p>
+            </div>
+
+            {enterError && (
+              <p className="text-[0.75rem]" style={{ color: '#f87171' }}>
+                {enterError}
+              </p>
+            )}
+
+            <div className="flex items-center gap-3 mt-1">
+              <button
+                onClick={closeEnterModal}
+                disabled={entering}
+                className="flex-1 px-4 py-2.5 rounded-xl text-[0.78rem] font-bold uppercase tracking-wider transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEnter}
+                disabled={entering}
+                className="flex-1 px-4 py-2.5 rounded-xl text-[0.78rem] font-bold uppercase tracking-wider text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #9333ea)' }}
+              >
+                {entering ? 'Entering...' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

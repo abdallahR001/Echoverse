@@ -10,6 +10,7 @@ import {
 import { generateEvent } from "../utils/eventsEngine.js";
 import { generateAIResponse } from "../utils/generateAiResponse.js";
 import { generateUserMessageEmbedding } from "../utils/generateUserMessageEmbedding.js";
+import { getImportantMemories } from "../utils/getImportantMemories.js";
 import { getRelevantMemoriesIfExist } from "../utils/getRelevantMemories.js";
 import { getRelevantUniverseInfo } from "../utils/getRelevantUniverseInfo.js";
 import { buildPrompt } from "../utils/messagePromptBuilder.js";
@@ -19,7 +20,8 @@ import { saveImportantMemories } from "./memorySlotService.js";
 export const sendMessage = async ({
     universeId,
     userMessage,
-    userId
+    userId,
+    onChunk
 }) => {
 
     const totalStart = performance.now();
@@ -140,9 +142,23 @@ export const sendMessage = async ({
 
     start = performance.now();
 
-    const aiResponse = await generateAIResponse({
+    const aiStream = await generateAIResponse({
         prompt
     });
+
+    let fullResponse = ""
+
+    for await (const chunk of aiStream) {
+
+    const content =
+        chunk.choices[0]?.delta?.content;
+
+    if (!content) continue;
+
+    fullResponse += content;
+
+    onChunk?.(content)
+    }
 
     console.log(
         `[TIMING] generateAIResponse: ${(performance.now() - start).toFixed(2)} ms`
@@ -158,8 +174,8 @@ export const sendMessage = async ({
     await createMessages({
         universeId: universe.id,
         userMessage,
-        aiMessage: aiResponse.narratorResponse.content,
-        responseRole: aiResponse.narratorResponse.senderRole
+        aiMessage: fullResponse,
+        responseRole: "AI"
     });
 
     console.log(
@@ -168,21 +184,16 @@ export const sendMessage = async ({
 
 
     // =========================================
-    // 8. Save important memories
+    // 8. Save important memories LATER
     // =========================================
 
-    start = performance.now();
+    console.log("getting memories")
 
-    await saveImportantMemories({
-        memories: aiResponse.importantMemories,
-        userId,
-        userUniverseId: universe.id
-    });
+    const memories = await getImportantMemories({userMessage,aiResponse:fullResponse})
 
-    console.log(
-        `[TIMING] saveImportantMemories: ${(performance.now() - start).toFixed(2)} ms`
-    );
+    await saveImportantMemories({memories,userId,userUniverseId:universe.id})
 
+    console.log("MEMORIES:", JSON.stringify(memories, null, 2));
 
     // =========================================
     // 9. Total
@@ -199,8 +210,8 @@ export const sendMessage = async ({
 
     return {
         success: true,
-        narratorResponse: aiResponse.narratorResponse,
-        systemResponse: aiResponse.systemResponse,
-        importantMemories: aiResponse.importantMemories
+        // narratorResponse: aiResponse.narratorResponse,
+        // systemResponse: aiResponse.systemResponse,
+        // importantMemories: aiResponse.importantMemories
     };
 };

@@ -89,6 +89,8 @@ export const createUserUniverse = async (req,res,next) =>
             )
         }
 
+        // here we check if the user has already entered this universe, if yes, we don't allow it
+
         const existingUserUniverse = await universeRepository.getUserUniverse({userId,universeId})
 
         if(existingUserUniverse)
@@ -98,6 +100,10 @@ export const createUserUniverse = async (req,res,next) =>
 
             throw error
         }
+
+        // now we should lock the last active user universe universe
+
+        const lastActiveUserUniverse = await universeRepository.lockLastActiveUserUniverse({userId,universeId})
 
         const userUniverse = await universeRepository.createUserUniverse({userId,universeId})
 
@@ -139,6 +145,36 @@ export const getUniverses = async (req,res,next) =>
                 universes
             }
         )
+    } catch (error) {
+        console.log(error)
+
+        next(error)
+    }
+}
+
+export const getUserUniverse = async (req,res,next) =>
+{
+    try {
+        const {universeId} = req.query
+
+        console.log(universeId);
+        
+
+        const {id} = req.user
+
+        const universe = await universeRepository.getUserUniverse({userId:id,universeId})
+
+        if(universe?.messages)
+            universe.messages.reverse()
+
+        console.log(
+  universe.messages.map(m => ({
+    role: m.senderRole,
+    content: m.content
+  }))
+);
+
+        return res.json(universe)
     } catch (error) {
         console.log(error)
 

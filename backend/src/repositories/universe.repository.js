@@ -106,6 +106,45 @@ export const getUserUniverse = async({userId,universeId}) =>
     },
     include:{
       universe:true,
+      messages:
+      {
+        orderBy:{
+          created_at:"desc"
+        },
+        take:10
+      },
     }
   })
 }
+
+export const lockLastActiveUserUniverse = async ({ userId }) => {
+    return await prisma.$transaction(async (tx) => {
+
+        const lastActive = await tx.userUniverse.findFirst({
+            where: {
+                userId,
+                status: "ACTIVE"
+            },
+            orderBy: {
+                created_at: "desc"
+            }
+        })
+
+        if (!lastActive) {
+            return null
+        }
+
+        return await tx.userUniverse.update({
+            where: {
+                userId_universeId: {
+                    userId,
+                    universeId: lastActive.universeId
+                }
+            },
+            data: {
+                status: "DORMANT"
+            }
+        })
+    })
+}
+

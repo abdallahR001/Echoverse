@@ -6,15 +6,27 @@ export const createMessage = async (req, res, next) => {
 
         const userId = req.user.id;
 
-        const response = await sendMessage({
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.setHeader("Transfer-Encoding", "chunked");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+
+        await sendMessage({
             universeId,
             userMessage,
-            userId
+            userId,
+            onChunk: (chunk) => {
+                res.write(chunk);
+            },
         });
 
-        res.status(200).json(response);
+        res.end();
 
     } catch (error) {
-        next(error);
+        if (!res.headersSent) {
+            next(error);
+        } else {
+            res.end();
+        }
     }
 };
