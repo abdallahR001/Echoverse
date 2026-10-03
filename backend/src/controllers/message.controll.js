@@ -1,5 +1,4 @@
 import { sendMessage } from "../services/messageService.js";
-
 export const createMessage = async (req, res, next) => {
     try {
         const { universeId, userMessage } = req.body;
@@ -11,7 +10,7 @@ export const createMessage = async (req, res, next) => {
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
 
-        await sendMessage({
+        const result = await sendMessage({
             universeId,
             userMessage,
             userId,
@@ -19,6 +18,14 @@ export const createMessage = async (req, res, next) => {
                 res.write(chunk);
             },
         });
+
+        res.write(
+            `\n\n__METADATA__${JSON.stringify({
+                dangerLevel: result.dangerLevel,
+                realityStability: result.realityStability,
+                objective: result.objective
+            })}`
+        );
 
         res.end();
 

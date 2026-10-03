@@ -1,25 +1,25 @@
-import { ShieldIcon, AlertTriangleIcon, CloseIcon, TargetIcon } from '../components/Icons';
+import { ShieldIcon, AlertTriangleIcon, CloseIcon, TargetIcon } from '.././components/Icons';
 
-/* ────────────────────────────────────────────────────────────
-   Fallback stats — لحد ما الباك اند يرجع danger/stability،
-   بنستخدم قيم افتراضية بدل الكراش
-   ──────────────────────────────────────────────────────────── */
+// Defaults shown until the first message reply brings real values
+// from the backend's __METADATA__ block.
+const DEFAULT_DANGER = 50;
+const DEFAULT_STABILITY = 50;
+const DEFAULT_OBJECTIVE_TITLE = 'No active objective';
+const DEFAULT_OBJECTIVE_STATUS = 'NONE';
 
-const fallbackStats = {
-  danger: 50,
-  stability: 50,
-};
+export default function UniverseSidebar({
+  sidebarOpen,
+  onClose,
+  universeDescription,
+  dangerLevel,
+  realityStability,
+  objective,
+}) {
+  const danger = dangerLevel ?? DEFAULT_DANGER;
+  const stability = realityStability ?? DEFAULT_STABILITY;
+  const objectiveTitle = objective?.title ?? DEFAULT_OBJECTIVE_TITLE;
+  const objectiveStatus = (objective?.status ?? DEFAULT_OBJECTIVE_STATUS).toString().toUpperCase();
 
-/* ────────────────────────────────────────────────────────────
-   Current Objective — HARD-CODED لحد ما الباك اند يرجعه
-   ──────────────────────────────────────────────────────────── */
-
-const currentObjective = {
-  title: 'Find the Source of the Signal',
-  status: 'ACTIVE',
-};
-
-export default function UniverseSidebar({ sidebarOpen, onClose, universeDescription }) {
   return (
     <aside
       className={`
@@ -59,7 +59,7 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
         </p>
       </div>
 
-      {/* Reality Stability — placeholder until backend provides it */}
+      {/* Reality Stability — driven by the latest __METADATA__ block */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span
@@ -78,7 +78,7 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
               color: 'rgba(216,180,254,0.8)',
             }}
           >
-            {fallbackStats.stability}%
+            {stability}%
           </span>
         </div>
 
@@ -89,16 +89,16 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
           }}
         >
           <div
-            className="h-full rounded-full"
+            className="h-full rounded-full transition-all duration-500"
             style={{
-              width: `${fallbackStats.stability}%`,
+              width: `${stability}%`,
               background: 'linear-gradient(90deg, #7c3aed, #c084fc)',
             }}
           />
         </div>
       </div>
 
-      {/* Danger Level — placeholder until backend provides it */}
+      {/* Danger Level — driven by the latest __METADATA__ block */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span
@@ -117,7 +117,7 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
               color: '#f87171',
             }}
           >
-            {fallbackStats.danger}%
+            {danger}%
           </span>
         </div>
 
@@ -128,16 +128,16 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
           }}
         >
           <div
-            className="h-full rounded-full"
+            className="h-full rounded-full transition-all duration-500"
             style={{
-              width: `${fallbackStats.danger}%`,
+              width: `${danger}%`,
               background: 'linear-gradient(90deg, #b91c1c, #f87171)',
             }}
           />
         </div>
       </div>
 
-      {/* Current Objective — hard-coded for now */}
+      {/* Current Objective — driven by the latest __METADATA__ block */}
       <div className="flex flex-col gap-3">
         <span
           className="flex items-center gap-1.5 text-[0.65rem] font-bold tracking-[0.15em] uppercase"
@@ -155,7 +155,7 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
           }}
         >
           <h4 className="font-['Cinzel',serif] text-[0.85rem] font-bold text-white/85">
-            {currentObjective.title}
+            {objectiveTitle}
           </h4>
 
           <span
@@ -166,7 +166,7 @@ export default function UniverseSidebar({ sidebarOpen, onClose, universeDescript
               border: '1px solid rgba(147,51,234,0.35)',
             }}
           >
-            {currentObjective.status}
+            {objectiveStatus}
           </span>
         </div>
       </div>

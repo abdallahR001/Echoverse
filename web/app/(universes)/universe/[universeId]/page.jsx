@@ -14,6 +14,7 @@ import { useUniverseSession } from '../../../hooks/Useuniversesession';
 import { useBootSequence } from '../../../hooks/UseBootSequence';
 import { useSendMessage } from '../../../hooks/UseSendMessage';
 
+
 export default function UniversePage({ params }) {
   /*
     Next.js 16:
@@ -37,7 +38,7 @@ export default function UniversePage({ params }) {
   // view whenever the chat grows or the AI's streamed reply updates.
   const messagesEndRef = useRef(null);
 
-  const { inputValue, setInputValue, sending, sendError, handleSend, handleInputKeyDown } =
+  const { inputValue, setInputValue, sending, sendError, handleSend, handleInputKeyDown, stats } =
     useSendMessage({ universeId, setChatMessages });
 
   /* AUTO-SCROLL — follows the conversation on every new message
@@ -214,6 +215,9 @@ export default function UniversePage({ params }) {
             sidebarOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
             universeDescription={universeDescription}
+            dangerLevel={stats.dangerLevel}
+            realityStability={stats.realityStability}
+            objective={stats.objective}
           />
         </div>
       )}
