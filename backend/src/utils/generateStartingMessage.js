@@ -4,7 +4,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export async function generateStartingMessage({ description, lore }) {
+export async function generateStartingMessage({ description }) {
   const prompt = `
 You are the narrator of an immersive interactive text adventure.
 
@@ -12,9 +12,6 @@ A player has just entered a brand-new universe.
 
 Universe Description:
 ${description}
-
-Universe Lore:
-${lore}
 
 Your task is to write ONLY the opening scene.
 

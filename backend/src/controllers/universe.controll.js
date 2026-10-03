@@ -13,7 +13,6 @@ export const createUniverse = async (req, res) => {
         const universe = await universeRepository.createUniverse({
             universeCode,
             description,
-            lore
         });
 
         return res.status(201).json({
@@ -76,6 +75,14 @@ export const createUserUniverse = async (req,res,next) =>
 
         const userId = req.user.id
 
+        if(!userId)
+        {
+            const error = new Error("unauthorized")
+            error.status = 401
+
+            throw error
+        }
+
         const {universeId} = req.params
 
         const universe = await universeRepository.getUniverseById(universeId)
@@ -103,13 +110,12 @@ export const createUserUniverse = async (req,res,next) =>
 
         // now we should lock the last active user universe universe
 
-        const lastActiveUserUniverse = await universeRepository.lockLastActiveUserUniverse({userId,universeId})
+        await universeRepository.lockLastActiveUserUniverse({userId})
 
         const userUniverse = await universeRepository.createUserUniverse({userId,universeId})
 
         const startingMessage = await generateStartingMessage({
             description: universe.description,
-            lore: universe.lore
         });
 
         await createStartingMessage(
@@ -163,6 +169,14 @@ export const getUserUniverse = async (req,res,next) =>
         const {id} = req.user
 
         const universe = await universeRepository.getUserUniverse({userId:id,universeId})
+
+        if(!universe)
+        {
+            const error = new Error("universe not found")
+            error.status = 404
+
+            throw error
+        }
 
         if(universe?.messages)
             universe.messages.reverse()
