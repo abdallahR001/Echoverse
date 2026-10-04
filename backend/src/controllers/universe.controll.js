@@ -98,21 +98,22 @@ export const createUserUniverse = async (req,res,next) =>
 
         // here we check if the user has already entered this universe, if yes, we don't allow it
 
-        const existingUserUniverse = await universeRepository.getUserUniverse({userId,universeId})
+        // const existingUserUniverse = await universeRepository.getUserUniverse({userId,universeId})
 
-        if(existingUserUniverse)
-        {
-            const error = new Error("universe already entered")
-            error.status = 400
+        // if(existingUserUniverse)
+        // {
+        //     const error = new Error("universe already entered")
+        //     error.status = 400
 
-            throw error
-        }
+        //     throw error
+        // }
 
         // now we should lock the last active user universe universe
 
-        await universeRepository.lockLastActiveUserUniverse({userId})
-
-        const userUniverse = await universeRepository.createUserUniverse({userId,universeId})
+        const userUniverse = await universeRepository.enterUniverse({
+            userId,
+            universeId
+        })
 
         const startingMessage = await generateStartingMessage({
             description: universe.description,
@@ -195,3 +196,51 @@ export const getUserUniverse = async (req,res,next) =>
         next(error)
     }
 }
+
+
+export const updateUniverse = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      const error = new Error("unauthorized");
+      error.status = 401;
+      throw error;
+    }
+
+    const result = updateUniverseSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Invalid request data.",
+        errors: result.error.flatten(),
+      });
+    }
+
+    const { universeId, name, description, image } = result.data;
+
+    const universe = await universeRepository.getUniverseById(universeId);
+
+    if (!universe) {
+      return res.status(404).json({
+        message: "Universe not found."
+      });
+    }
+
+    const updatedUniverse = await universeRepository.updateUniverse({
+      universeId,
+      name,
+      description,
+      image,
+    });
+
+    return res.json({
+      message: "Universe updated successfully.",
+      universe: updatedUniverse,
+    });
+
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};

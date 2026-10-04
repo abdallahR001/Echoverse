@@ -19,6 +19,24 @@ export const getUniverseById = async (universeId) =>
     })
 }
 
+export const updateUniverse = async ({
+  universeId,
+  name,
+  description,
+  image
+}) => {
+  return await prisma.universe.update({
+    where: {
+      id: universeId
+    },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
+      ...(image !== undefined && { image })
+    }
+  })
+}
+
 export const getUniverses = async() =>
 {
   return await prisma.universe.findMany()
@@ -97,12 +115,11 @@ export const createUserUniverse = async({userId,universeId}) =>
 
 export const getUserUniverse = async({userId,universeId}) =>
 {
-  return await prisma.userUniverse.findUnique({
+  return await prisma.userUniverse.findFirst({
     where:{
-      userId_universeId:
-      {
-        userId,universeId
-      }
+      userId,
+      universeId,
+      status:"ACTIVE"
     },
     include:{
       universe:true,
@@ -117,10 +134,42 @@ export const getUserUniverse = async({userId,universeId}) =>
   })
 }
 
-export const lockLastActiveUserUniverse = async ({ userId }) => {
-    return await prisma.$transaction(async (tx) => {
+// export const lockLastActiveUserUniverse = async ({ userId }) => {
+//     return await prisma.$transaction(async (tx) => {
 
-        const lastActive = await tx.userUniverse.findFirst({
+//         const lastActive = await tx.userUniverse.findFirst({
+//             where: {
+//                 userId,
+//                 status: "ACTIVE"
+//             },
+//             orderBy: {
+//                 created_at: "desc"
+//             }
+//         })
+
+//         if (!lastActive) {
+//             return null
+//         }
+
+//         return await tx.userUniverse.update({
+//             where: {
+//                 userId_universeId: {
+//                     userId,
+//                     universeId: lastActive.universeId
+//                 }
+//             },
+//             data: {
+//                 status: "DORMANT"
+//             }
+//         })
+//     })
+// }
+
+export const enterUniverse = async({userId,universeId}) =>
+{
+  return await prisma.$transaction(async (tx) =>
+  {
+    const lastActive = await tx.userUniverse.findFirst({
             where: {
                 userId,
                 status: "ACTIVE"
@@ -130,21 +179,24 @@ export const lockLastActiveUserUniverse = async ({ userId }) => {
             }
         })
 
-        if (!lastActive) {
-            return null
+        if (lastActive) {
+      await tx.userUniverse.update({
+        where: {
+          userId_universeId: {
+            userId,
+            universeId: lastActive.universeId
+          }
+        },
+        data: {
+          status: "DORMANT"
         }
-
-        return await tx.userUniverse.update({
-            where: {
-                userId_universeId: {
-                    userId,
-                    universeId: lastActive.universeId
-                }
-            },
-            data: {
-                status: "DORMANT"
-            }
-        })
-    })
+      })
+    }
+        return await tx.userUniverse.create({
+        data:{
+          userId,
+          universeId
+        }
+      })
+  })
 }
-

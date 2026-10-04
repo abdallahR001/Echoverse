@@ -60,8 +60,10 @@ model User {
 
 model Universe {
   id           String   @id @default(uuid())
+  name         String? 
   universeCode String   @unique
   description  String
+  image        String?
   created_at   DateTime @default(now())
 
   userUniverses UserUniverse[]
@@ -89,7 +91,7 @@ model UserUniverse {
 
   characters Character[]
 
-  @@unique([userId, universeId])
+  // @@unique([userId, universeId])
 }
 
 model UniverseInfo {
