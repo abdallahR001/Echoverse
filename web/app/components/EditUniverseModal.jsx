@@ -7,14 +7,14 @@ export default function EditUniverseModal({ universe, onClose, onSave, onDelete 
   const [activeTab, setActiveTab] = useState('edit');
 
   // Edit tab state
-  const [name, setName] = useState(universe.name);
-  const [description, setDescription] = useState(universe.description);
-  const [coverPreview, setCoverPreview] = useState(universe.cover);
+  const [name, setName] = useState(universe.name ?? '');
+  const [description, setDescription] = useState(universe.description ?? '');
+  const [coverPreview, setCoverPreview] = useState(universe.cover ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fileRef = useRef(null);
 
   // Infos tab state
-  const [infos, setInfos] = useState(universe.infos);
+  const [infos, setInfos] = useState(universe.infos ?? []);
   const [infoInput, setInfoInput] = useState('');
   const [pendingInfos, setPendingInfos] = useState([]);
 
@@ -36,13 +36,12 @@ export default function EditUniverseModal({ universe, onClose, onSave, onDelete 
 
   const handleOkay = () => {
     if (!name.trim()) return;
-    // All infos (existing kept + new pending) go in one request
     onSave({
-      ...universe,
+      id: universe.id,
       name: name.trim(),
       description: description.trim(),
-      cover: coverPreview,
-      infos: [...infos, ...pendingInfos],
+      image: coverPreview,
+      pendingInfos, // new infos → each sent as separate POST /api/universes/info
     });
   };
 

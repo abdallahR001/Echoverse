@@ -3,15 +3,16 @@ import * as universeRepository from "../repositories/universe.repository.js";
 import { generateEmbedding } from "../services/embeddingService.js";
 import { generateStartingMessage } from "../utils/generateStartingMessage.js";
 import { generateUniverseCode } from "../utils/generateUniverseCode.js";
-
+import { updateUniverseSchema } from "../validations/universe.validation.js";
 export const createUniverse = async (req, res) => {
     try {
-        const {description} = req.body
+        const {name,description} = req.body
 
         const universeCode = generateUniverseCode();
 
         const universe = await universeRepository.createUniverse({
             universeCode,
+            name,
             description,
         });
 
@@ -29,6 +30,26 @@ export const createUniverse = async (req, res) => {
         });
     }
 };
+
+export const deleteUniverse = async(req,res,next) =>
+{
+    const {universeId} = req.body
+
+    try {
+        const result = await universeRepository.deleteUniverse(universeId)
+
+        res.json(
+            {
+                message:"deleted successfully",
+                result
+            }
+        )
+    } catch (error) {
+        console.log(error)
+
+        next(error)
+    }
+}
 
 export const addUniverseInfo = async (req,res,next) =>
 {
@@ -211,6 +232,7 @@ export const updateUniverse = async (req, res, next) => {
     const result = updateUniverseSchema.safeParse(req.body);
 
     if (!result.success) {
+        console.log(result.error.issues);
       return res.status(400).json({
         message: "Invalid request data.",
         errors: result.error.flatten(),

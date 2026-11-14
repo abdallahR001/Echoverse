@@ -79,7 +79,7 @@ model UserUniverse {
 
   user User @relation(fields: [userId], references: [id])
 
-  universe Universe @relation(fields: [universeId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id], onDelete: Cascade)
 
   messages Message[]
 
@@ -101,7 +101,7 @@ model UniverseInfo {
   embedding   Unsupported("vector")
   created_at  DateTime              @default(now())
 
-  universe Universe @relation(fields: [universeId], references: [id])
+  universe Universe @relation(fields: [universeId], references: [id], onDelete:Cascade)
 
   @@index([universeId])
 }

@@ -1,61 +1,97 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import UniverseCard from '../../components/AdminPageUniverseCard';
 import AddUniverseModal from '../../components/AddUniverseModal';
 import EditUniverseModal from '../../components/EditUniverseModal';
 
-const FAKE_UNIVERSES = [
-  {
-    id: 1,
-    name: 'The Shattered Meridian',
-    description: 'A fractured city suspended between dimensions. Time moves differently here.',
-    cover: '/image1.png',
-    players: 312,
-    infos: [
-      { id: 1, content: 'Time loops every 48 hours inside the city walls.' },
-      { id: 2, content: 'The northern district has been completely erased from all maps.' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Echo Station 7',
-    description: 'An abandoned orbital station where the AI crew never powered down.',
-    cover: '/image2.png',
-    players: 198,
-    infos: [
-      { id: 1, content: 'The AI known as VELA controls all airlocks.' },
-    ],
-  },
-  {
-    id: 3,
-    name: 'The Hollow Crown',
-    description: 'A medieval kingdom where the king died three years ago — nobody told the court.',
-    cover: '/image1.png',
-    players: 87,
-    infos: [],
-  },
-];
-
-const FAKE_STATS = {
-  players: 1204,
-  universes: 3,
-  activeSessions: 47,
-};
+const API = 'http://localhost:4000/api/universes';
 
 export default function AdminDashboard() {
-  const [universes, setUniverses] = useState(FAKE_UNIVERSES);
+  const [universes, setUniverses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
-  const handleAdd = (newUniverse) => {
-    setUniverses(prev => [...prev, { ...newUniverse, id: Date.now(), players: 0, infos: [] }]);
-    setShowAdd(false);
+  // Fetch universes on mount
+  useEffect(() => {
+    const fetchUniverses = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(API, { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to load universes.');
+        setUniverses(data.universes ?? []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUniverses();
+  }, []);
+
+  // Create universe → POST /api/universes
+  const handleAdd = async ({ description, cover, name, infos }) => {
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ description }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create universe.');
+      setUniverses(prev => [...prev, { ...data.universe, infos: [] }]);
+      setShowAdd(false);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  const handleEdit = (updated) => {
-    setUniverses(prev => prev.map(u => u.id === updated.id ? updated : u));
-    setEditTarget(null);
+  // Update universe → PUT /api/universes/update
+  // Add infos → POST /api/universes/info (one per info, all in parallel)
+  const handleEdit = async ({ id, name, description, image, pendingInfos }) => {
+    try {
+      // 1. Update universe fields
+      const updateRes = await fetch(`${API}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ universeId: id, name, description, image }),
+      });
+      const updateData = await updateRes.json();
+      if (!updateRes.ok) throw new Error(updateData.message || 'Failed to update universe.');
+
+      // 2. Send each pending info in parallel
+      if (pendingInfos.length > 0) {
+        const infoResults = await Promise.all(
+          pendingInfos.map(info =>
+            fetch(`${API}/info`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ universeId: id, info: info.content }),
+            }).then(r => r.json())
+          )
+        );
+        const newInfos = infoResults.map(r => r.info).filter(Boolean);
+        setUniverses(prev =>
+          prev.map(u =>
+            u.id === id
+              ? { ...updateData.universe, infos: [...(u.infos ?? []), ...newInfos] }
+              : u
+          )
+        );
+      } else {
+        setUniverses(prev => prev.map(u => u.id === id ? { ...updateData.universe, infos: u.infos } : u));
+      }
+
+      setEditTarget(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleDelete = (id) => {
@@ -98,7 +134,7 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="max-w-[1200px] mx-auto px-8 py-10 flex flex-col gap-10">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-10 flex flex-col gap-10">
 
         {/* Page title */}
         <div className="flex flex-col gap-1">
@@ -113,12 +149,32 @@ export default function AdminDashboard() {
           </p>
         </div>
 
+        {/* Global error banner */}
+        {error && (
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" className="flex-shrink-0">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <p className="text-[0.82rem] flex-1" style={{ color: 'rgba(239,68,68,0.9)', fontFamily: "'DM Sans', sans-serif" }}>
+              {error}
+            </p>
+            <button onClick={() => setError('')} style={{ color: 'rgba(239,68,68,0.5)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             {
               label: 'Total Players',
-              value: FAKE_STATS.players.toLocaleString(),
+              value: '—',
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
@@ -131,7 +187,7 @@ export default function AdminDashboard() {
             },
             {
               label: 'Universes',
-              value: universes.length,
+              value: loading ? '...' : universes.length,
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -145,7 +201,7 @@ export default function AdminDashboard() {
             },
             {
               label: 'Active Sessions',
-              value: FAKE_STATS.activeSessions,
+              value: '—',
               icon: (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -214,11 +270,43 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {universes.map(u => (
-              <UniverseCard key={u.id} universe={u} onClick={() => setEditTarget(u)} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <div
+                  key={i}
+                  className="rounded-xl overflow-hidden animate-pulse"
+                  style={{ border: '1px solid rgba(147,51,234,0.08)', background: '#080610' }}
+                >
+                  <div className="h-36" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  <div className="px-5 py-4 flex flex-col gap-2.5">
+                    <div className="h-3.5 rounded-full w-3/4" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-3 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <div className="h-3 rounded-full w-2/3" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : universes.length === 0 ? (
+            <div
+              className="flex flex-col items-center gap-3 py-16 rounded-xl"
+              style={{ border: '1px dashed rgba(147,51,234,0.15)' }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(147,51,234,0.4)" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v8M8 12h8"/>
+              </svg>
+              <p className="text-[0.83rem]" style={{ color: 'rgba(255,255,255,0.25)', fontFamily: "'DM Sans', sans-serif" }}>
+                No universes yet. Add your first one.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {universes.map(u => (
+                <UniverseCard key={u.id} universe={u} onClick={() => setEditTarget(u)} />
+              ))}
+            </div>
+          )}
 
         </div>
       </div>

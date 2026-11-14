@@ -10,6 +10,6 @@ router.post("/info",auth,universeController.addUniverseInfo)
 router.get("/enter/:universeId",auth,universeController.createUserUniverse)
 router.get("/universe", auth,universeController.getUserUniverse)
 router.get("/",universeController.getUniverses)
-router.get("/update",auth,universeController.updateUniverse)
-
+router.put("/update",auth,universeController.updateUniverse)
+router.delete("/",auth,universeController.deleteUniverse)
 export default router;

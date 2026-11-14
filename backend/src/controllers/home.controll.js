@@ -39,6 +39,7 @@ export const getHome = async (req,res,next) =>
                 universe:{
                     select:{
                         id:true,
+                        name:true,
                         description:true,
                         universeCode:true
                     }
@@ -69,12 +70,28 @@ export const getHome = async (req,res,next) =>
         }
     )
 
+    const activeObjectives = await prisma.objective.findMany(
+        {
+            where:{
+                userId:id,
+            }
+            ,
+            select:{
+                id:true,
+                title:true,
+                status:true,
+                created_at:true,
+            }
+        }
+    )
+
     return res.json(
         {
             user,
             currentUniverse,
             enteredUniverses,
-            universesToExplore
+            universesToExplore,
+            activeObjectives
         }
     )
     } catch (error) {

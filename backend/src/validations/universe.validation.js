@@ -1,8 +1,10 @@
-const updateUniverseSchema = z.object({
+import { z } from "zod";
+
+export const updateUniverseSchema = z.object({
   universeId: z.string().uuid(),
   name: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
-  image: z.string().url().optional(),
+  image: z.string().url().nullable().optional(),
 }).refine(
   (data) =>
     data.name !== undefined ||

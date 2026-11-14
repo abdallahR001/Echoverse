@@ -1,13 +1,25 @@
 import prisma from "../config/prisma.js"
 
-export const createUniverse = async ({universeCode,description}) =>
+export const createUniverse = async ({universeCode,name,description}) =>
 {
     return await prisma.universe.create({
         data:{
+            name,
             description,
             universeCode,
         }
     })
+}
+
+export const deleteUniverse = async (universeId) =>
+{
+  return await prisma.universe.delete(
+    {
+      where:{
+        id:universeId
+      }
+    }
+  )
 }
 
 export const getUniverseById = async (universeId) =>
@@ -165,38 +177,35 @@ export const getUserUniverse = async({userId,universeId}) =>
 //     })
 // }
 
-export const enterUniverse = async({userId,universeId}) =>
-{
-  return await prisma.$transaction(async (tx) =>
-  {
-    const lastActive = await tx.userUniverse.findFirst({
-            where: {
-                userId,
-                status: "ACTIVE"
-            },
-            orderBy: {
-                created_at: "desc"
-            }
-        })
+export const enterUniverse = async ({ userId, universeId }) => {
+  return await prisma.$transaction(async (tx) => {
 
-        if (lastActive) {
+    const lastActive = await tx.userUniverse.findFirst({
+      where: {
+        userId,
+        status: "ACTIVE"
+      },
+      orderBy: {
+        created_at: "desc"
+      }
+    })
+
+    if (lastActive) {
       await tx.userUniverse.update({
         where: {
-          userId_universeId: {
-            userId,
-            universeId: lastActive.universeId
-          }
+          id: lastActive.id
         },
         data: {
           status: "DORMANT"
         }
       })
     }
-        return await tx.userUniverse.create({
-        data:{
-          userId,
-          universeId
-        }
-      })
+
+    return await tx.userUniverse.create({
+      data: {
+        userId,
+        universeId
+      }
+    })
   })
 }
